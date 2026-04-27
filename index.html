@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Penyimpanan Prompt AI</title>
+    <!-- Tailwind CSS untuk Desain -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS tambahan agar sesuai jika di embed di blogger */
+        #app-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f9fafb;
+            min-height: 500px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%;
+            width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Tweak untuk input file agar lebih estetik */
+        input[type="file"]::file-selector-button {
+            border: none; background: #3b82f6; color: white; padding: 10px 15px;
+            border-radius: 5px; cursor: pointer; margin-right: 15px; transition: background .2s ease-in-out;
+        }
+        input[type="file"]::file-selector-button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="relative">
+    
+    <!-- HEADER & NAVIGASI -->
+    <div class="bg-blue-600 text-white p-4">
+        <h2 class="text-xl font-bold text-center mb-4"><i class="fa-solid fa-robot mr-2"></i> Arsip Prompt AI</h2>
+        <div class="flex flex-col gap-2 text-sm">
+            <button onclick="pindahMenu('daftar-gambar')" id="nav-daftar-gambar" class="nav-btn w-full text-left bg-blue-800 px-4 py-3 rounded font-semibold hover:bg-blue-700 transition">
+                <i class="fa-solid fa-image w-6 text-center"></i> Daftar Prompt Gambar
+            </button>
+            <button onclick="pindahMenu('input-gambar')" id="nav-input-gambar" class="nav-btn w-full text-left bg-blue-500 px-4 py-3 rounded hover:bg-blue-700 transition">
+                <i class="fa-solid fa-plus w-6 text-center"></i> Input Gambar
+            </button>
+            <button onclick="pindahMenu('daftar-video')" id="nav-daftar-video" class="nav-btn w-full text-left bg-blue-500 px-4 py-3 rounded hover:bg-blue-700 transition">
+                <i class="fa-solid fa-video w-6 text-center"></i> Daftar Prompt Video
+            </button>
+            <button onclick="pindahMenu('input-video')" id="nav-input-video" class="nav-btn w-full text-left bg-blue-500 px-4 py-3 rounded hover:bg-blue-700 transition">
+                <i class="fa-solid fa-plus w-6 text-center"></i> Input Video
+            </button>
+            <button onclick="pindahMenu('pengaturan')" id="nav-pengaturan" class="nav-btn w-full text-left bg-blue-500 px-4 py-3 rounded hover:bg-blue-700 transition">
+                <i class="fa-solid fa-gear w-6 text-center"></i> Pengaturan
+            </button>
+        </div>
+    </div>
+
+    <!-- AREA KONTEN -->
+    <div class="p-4 md:p-6 text-gray-800">
+
+        <!-- 1. MENU DAFTAR PROMPT GAMBAR -->
+        <div id="daftar-gambar" class="menu-konten">
+            <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="fa-solid fa-images text-blue-500"></i> Galeri Prompt AI Gambar</h3>
+            <div id="loading-daftar-gambar" class="hidden"><div class="loader"></div><p class="text-center text-sm">Memuat data...</p></div>
+            <div id="list-data-gambar" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Data akan dimuat disini oleh JavaScript -->
+            </div>
+        </div>
+
+        <!-- 2. MENU INPUT PROMPT GAMBAR -->
+        <div id="input-gambar" class="menu-konten hidden">
+            <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle text-blue-500"></i> Tambah Prompt AI Gambar</h3>
+            <form id="formGambar" onsubmit="submitData(event, 'gambar')">
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Masukan Gambar</label>
+                    <input type="file" id="fileGambar" accept="image/*" class="w-full border p-2 rounded bg-white" required onchange="previewImage(event, 'preview-gambar-img')">
+                    <p class="text-xs text-gray-500 mt-1">Pilih gambar dari galeri/perangkat Anda.</p>
+                    <!-- Preview Gambar -->
+                    <img id="preview-gambar-img" class="hidden mt-3 w-full max-h-64 object-contain border rounded bg-gray-50" />
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Masukan Prompt AI</label>
+                    <textarea id="teksPromptGambar" rows="6" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-blue-500" placeholder="Tuliskan kalimat prompt yang panjang dan detail di sini..." required></textarea>
+                </div>
+                <button type="submit" id="btnSubmitGambar" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data Gambar
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. MENU DAFTAR PROMPT VIDEO -->
+        <div id="daftar-video" class="menu-konten hidden">
+            <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="fa-solid fa-film text-blue-500"></i> Galeri Prompt AI Video</h3>
+            <div id="loading-daftar-video" class="hidden"><div class="loader"></div><p class="text-center text-sm">Memuat data...</p></div>
+            <div id="list-data-video" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Data akan dimuat disini oleh JavaScript -->
+            </div>
+        </div>
+
+        <!-- 4. MENU INPUT PROMPT VIDEO -->
+        <div id="input-video" class="menu-konten hidden">
+            <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle text-blue-500"></i> Tambah Prompt AI Video</h3>
+            <form id="formVideo" onsubmit="submitData(event, 'video')">
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Masukan Gambar/Thumbnail Referensi (Opsional)</label>
+                    <input type="file" id="fileVideo" accept="image/*" class="w-full border p-2 rounded bg-white" onchange="previewImage(event, 'preview-video-img')">
+                    <!-- Preview Gambar Video -->
+                    <img id="preview-video-img" class="hidden mt-3 w-full max-h-64 object-contain border rounded bg-gray-50" />
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Masukan Prompt AI</label>
+                    <textarea id="teksPromptVideo" rows="6" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-blue-500" placeholder="Tuliskan instruksi prompt video di sini..." required></textarea>
+                </div>
+                <button type="submit" id="btnSubmitVideo" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data Video
+                </button>
+            </form>
+        </div>
+
+        <!-- 5. MENU PENGATURAN (INPUT URL GAS) -->
+        <div id="pengaturan" class="menu-konten hidden">
+            <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="fa-solid fa-gear text-blue-500"></i> Pengaturan Sistem</h3>
+            <div class="mb-4">
+                <label class="block font-semibold mb-2">URL Web App (Google Apps Script)</label>
+                <input type="url" id="input-gas-url" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-blue-500" placeholder="https://script.google.com/macros/s/..." required>
+                <p class="text-xs text-gray-500 mt-2">Masukkan URL Web App yang Anda dapatkan setelah deploy di Google Apps Script ke dalam kotak ini agar aplikasi dapat terhubung ke database.</p>
+            </div>
+            <button onclick="simpanPengaturan()" class="w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 transition">
+                <i class="fa-solid fa-save mr-2"></i> Simpan URL Pengaturan
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL LIGHTBOX UNTUK GAMBAR -->
+<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black bg-opacity-90 flex items-center justify-center p-4">
+    <button onclick="tutupLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl font-bold">&times;</button>
+    <div class="relative w-full max-w-4xl max-h-[90vh] flex justify-center items-center">
+        <!-- SVG Loading Spinner -->
+        <i id="lightbox-loading" class="fa-solid fa-circle-notch fa-spin text-white text-4xl absolute"></i>
+        <img id="lightbox-img" class="max-w-full max-h-[90vh] object-contain rounded shadow-lg relative z-10 hidden" onload="document.getElementById('lightbox-loading').classList.add('hidden'); this.classList.remove('hidden');" />
+    </div>
+</div>
+
+<!-- MODAL EDIT PROMPT -->
+<div id="modal-edit" class="hidden fixed inset-0 z-[90] bg-black bg-opacity-60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+        <div class="bg-blue-600 text-white p-3 font-bold flex justify-between items-center">
+            <span><i class="fa-solid fa-edit mr-2"></i> Edit Prompt</span>
+            <button onclick="tutupModalEdit()" class="text-white hover:text-gray-200 text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <input type="hidden" id="edit-id">
+            <input type="hidden" id="edit-tipe">
+            <textarea id="edit-teks" rows="6" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-blue-500 mb-4"></textarea>
+            <button onclick="simpanEdit()" id="btnSimpanEdit" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
+                Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFIKASI KUSTOM TAMPIL DI TENGAH -->
+<div id="custom-notif" class="hidden opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-[200] flex items-center gap-3 transition-opacity duration-300 pointer-events-none">
+    <i id="notif-icon" class="fa-solid fa-circle-check text-2xl"></i>
+    <span id="notif-pesan" class="font-bold text-lg">Data berhasil disimpan!</span>
+</div>
+
+<script>
+    // Fungsi untuk mengambil URL dari penyimpanan lokal (Local Storage)
+    function getGasUrl() {
+        return localStorage.getItem('gas_url') || "";
+    }
+
+    // Fungsi Simpan Pengaturan URL
+    function simpanPengaturan() {
+        const url = document.getElementById('input-gas-url').value;
+        if (url.trim() === "") {
+            showNotif("URL tidak boleh kosong!", "error");
+            return;
+        }
+        if (!url.startsWith("https://script.google.com/")) {
+            showNotif("Format salah! Harus berawalan https://script.google.com/", "error");
+            return;
+        }
+        localStorage.setItem('gas_url', url.trim());
+        showNotif("URL berhasil disimpan!", "sukses");
+        
+        // Pindah otomatis ke menu gambar setelah 1 detik
+        setTimeout(() => {
+            pindahMenu('daftar-gambar');
+        }, 1000);
+    }
+
+    // Fungsi Navigasi
+    function pindahMenu(menuId) {
+        document.querySelectorAll('.menu-konten').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-btn').forEach(el => {
+            el.classList.remove('bg-blue-800', 'font-semibold');
+            el.classList.add('bg-blue-500');
+        });
+
+        document.getElementById(menuId).classList.remove('hidden');
+        let btnAktif = document.getElementById('nav-' + menuId);
+        btnAktif.classList.remove('bg-blue-500');
+        btnAktif.classList.add('bg-blue-800', 'font-semibold');
+
+        if(menuId === 'daftar-gambar') loadData('gambar');
+        if(menuId === 'daftar-video') loadData('video');
+    }
+
+    // Fungsi Notifikasi Kustom (Tampil di Tengah & Hilang Otomatis)
+    function showNotif(pesan, tipe = 'sukses') {
+        const notifEl = document.getElementById('custom-notif');
+        const pesanEl = document.getElementById('notif-pesan');
+        const iconEl = document.getElementById('notif-icon');
+
+        pesanEl.innerText = pesan;
+
+        if (tipe === 'sukses') {
+            notifEl.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-[200] flex items-center gap-3 transition-opacity duration-300 opacity-100 pointer-events-none";
+            iconEl.className = "fa-solid fa-circle-check text-2xl";
+        } else {
+            notifEl.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white px-6 py-4 rounded-lg shadow-2xl z-[200] flex items-center gap-3 transition-opacity duration-300 opacity-100 pointer-events-none";
+            iconEl.className = "fa-solid fa-circle-xmark text-2xl";
+        }
+
+        notifEl.classList.remove('hidden');
+
+        // Sembunyikan otomatis setelah 2 detik
+        setTimeout(() => {
+            notifEl.classList.remove('opacity-100');
+            notifEl.classList.add('opacity-0');
+            setTimeout(() => notifEl.classList.add('hidden'), 300); // Menunggu transisi pudar selesai
+        }, 2000);
+    }
+
+    // Menampilkan Preview Gambar Saat Upload
+    function previewImage(event, targetId) {
+        const file = event.target.files[0];
+        const preview = document.getElementById(targetId);
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+        } else {
+            preview.src = '';
+            preview.classList.add('hidden');
+        }
+    }
+
+    // Lightbox Functionality
+    function bukaLightbox(url) {
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        img.src = url;
+        lightbox.classList.remove('hidden');
+    }
+
+    function tutupLightbox() {
+        document.getElementById('lightbox').classList.add('hidden');
+        document.getElementById('lightbox-img').src = '';
+    }
+
+    // File to Base64
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Submit / Simpan Data Baru
+    async function submitData(event, tipe) {
+        event.preventDefault();
+        
+        let currentUrl = getGasUrl();
+        if(!currentUrl){
+            showNotif("Harap simpan URL Apps Script di menu Pengaturan", "error");
+            pindahMenu('pengaturan');
+            return;
+        }
+
+        let fileInput = document.getElementById(tipe === 'gambar' ? 'fileGambar' : 'fileVideo');
+        let promptInput = document.getElementById(tipe === 'gambar' ? 'teksPromptGambar' : 'teksPromptVideo');
+        let btnSubmit = document.getElementById(tipe === 'gambar' ? 'btnSubmitGambar' : 'btnSubmitVideo');
+        let previewImg = document.getElementById(tipe === 'gambar' ? 'preview-gambar-img' : 'preview-video-img');
+        
+        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
+        btnSubmit.disabled = true;
+
+        let base64String = "";
+        let mimeType = "";
+        let namaFile = "";
+
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0];
+            let fullBase64 = await getBase64(file);
+            base64String = fullBase64.split(',')[1]; 
+            mimeType = file.type;
+            namaFile = file.name;
+        }
+
+        let payload = { action: "simpan", tipe: tipe, prompt: promptInput.value, base64Data: base64String, mimeType: mimeType, namaFile: namaFile };
+
+        try {
+            let response = await fetch(currentUrl, { method: "POST", body: JSON.stringify(payload) });
+            let result = await response.json();
+            
+            if(result.status === "sukses"){
+                showNotif("Data berhasil disimpan!", "sukses");
+                fileInput.value = "";
+                promptInput.value = "";
+                previewImg.src = "";
+                previewImg.classList.add('hidden');
+                pindahMenu('daftar-' + tipe);
+            } else {
+                showNotif("Gagal menyimpan: " + result.pesan, "error");
+            }
+        } catch (error) {
+            showNotif("Terjadi kesalahan jaringan.", "error");
+        } finally {
+            btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> Simpan Data ${tipe.charAt(0).toUpperCase() + tipe.slice(1)}`;
+            btnSubmit.disabled = false;
+        }
+    }
+
+    // Load Data & Render Cards
+    async function loadData(tipe) {
+        let currentUrl = getGasUrl();
+        if(!currentUrl) return;
+
+        let listContainer = document.getElementById('list-data-' + tipe);
+        let loading = document.getElementById('loading-daftar-' + tipe);
+        
+        listContainer.innerHTML = "";
+        loading.classList.remove('hidden');
+
+        let payload = { action: "ambil", tipe: tipe };
+
+        try {
+            let response = await fetch(currentUrl, { method: "POST", body: JSON.stringify(payload) });
+            let result = await response.json();
+            
+            loading.classList.add('hidden');
+
+            if(result.status === "sukses" && result.data.length > 0) {
+                result.data.forEach(item => {
+                    let card = document.createElement('div');
+                    card.className = "bg-white border rounded shadow-sm overflow-hidden flex flex-col";
+                    
+                    // Fallback gambar jika URL error (berupa gambar base64 ringan bawaan)
+                    let errorImage = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200' fill='%23e5e7eb'%3E%3Crect width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%236b7280'%3EGambar Gagal Dimuat%3C/text%3E%3C/svg%3E";
+                    
+                    // Fitur Gambar Clickable (Buka Lightbox)
+                    let imageHTML = item.gambar ? 
+                        `<div class="w-full h-48 bg-gray-200 cursor-pointer relative group flex items-center justify-center overflow-hidden" onclick="bukaLightbox('${item.gambar}')">
+                            <i class="fa-solid fa-image text-gray-400 text-3xl absolute"></i>
+                            <img src="${item.gambar}" class="w-full h-full object-cover relative z-10 transition duration-300 group-hover:brightness-75" alt="Prompt Image" onerror="this.onerror=null; this.src='${errorImage}';">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 z-20 pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass-plus text-white text-4xl drop-shadow-md"></i>
+                            </div>
+                        </div>` : 
+                        `<div class="w-full h-10 bg-gray-200 flex items-center justify-center text-xs text-gray-500">Tanpa Gambar</div>`;
+
+                    // Escape quotes for JS inline functions
+                    let safePrompt = item.prompt.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    card.innerHTML = `
+                        ${imageHTML}
+                        <div class="p-4 flex-grow flex flex-col">
+                            <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Prompt AI:</h4>
+                            <div class="bg-gray-50 p-3 rounded border text-sm text-gray-700 mb-3 flex-grow whitespace-pre-wrap">${item.prompt}</div>
+                            
+                            <div class="flex flex-col gap-2 mt-auto">
+                                <button onclick="salinTeks(this)" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 border font-semibold py-2 rounded text-sm transition">
+                                    <i class="fa-regular fa-copy"></i> Salin Prompt
+                                </button>
+                                <div class="flex gap-2">
+                                    <!-- Pastikan backend me-return 'id' atau 'baris' -->
+                                    <button onclick="bukaModalEdit('${item.id || item.baris}', '${tipe}', '${safePrompt}')" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded text-sm transition">
+                                        <i class="fa-solid fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="hapusData('${item.id || item.baris}', '${tipe}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded text-sm transition">
+                                        <i class="fa-solid fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    listContainer.appendChild(card);
+                });
+            } else {
+                listContainer.innerHTML = `<div class="col-span-1 md:col-span-2 text-center text-gray-500 py-8">Belum ada data. Silahkan input terlebih dahulu.</div>`;
+            }
+
+        } catch (error) {
+            loading.classList.add('hidden');
+            listContainer.innerHTML = `<div class="col-span-1 md:col-span-2 text-center text-red-500 py-8">Gagal mengambil data database.</div>`;
+        }
+    }
+
+    // ==========================================
+    // FUNGSI EDIT & HAPUS
+    // ==========================================
+    
+    function bukaModalEdit(id, tipe, promptText) {
+        if(!id || id === 'undefined') {
+            alert("Sistem sedang mengupdate. Pastikan Backend Apps Script sudah diupdate agar memiliki ID.");
+            return;
+        }
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-tipe').value = tipe;
+        document.getElementById('edit-teks').value = promptText.replace(/&quot;/g, '"');
+        document.getElementById('modal-edit').classList.remove('hidden');
+    }
+
+    function tutupModalEdit() {
+        document.getElementById('modal-edit').classList.add('hidden');
+    }
+
+    async function simpanEdit() {
+        let id = document.getElementById('edit-id').value;
+        let tipe = document.getElementById('edit-tipe').value;
+        let promptBaru = document.getElementById('edit-teks').value;
+        let btn = document.getElementById('btnSimpanEdit');
+
+        let currentUrl = getGasUrl();
+        if(!currentUrl) return;
+
+        btn.innerHTML = "Menyimpan...";
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(currentUrl, {
+                method: "POST",
+                body: JSON.stringify({ action: "edit", id: id, tipe: tipe, prompt: promptBaru })
+            });
+            let result = await response.json();
+            
+            if(result.status === "sukses"){
+                tutupModalEdit();
+                showNotif("Data berhasil diedit!", "sukses");
+                loadData(tipe); // Reload data
+            } else {
+                showNotif("Gagal mengedit: " + result.pesan, "error");
+            }
+        } catch(err) {
+            showNotif("Terjadi kesalahan jaringan.", "error");
+        } finally {
+            btn.innerHTML = "Simpan Perubahan";
+            btn.disabled = false;
+        }
+    }
+
+    async function hapusData(id, tipe) {
+        if(!id || id === 'undefined') {
+            alert("Pastikan Backend Apps Script sudah diupdate agar mendukung fitur hapus.");
+            return;
+        }
+
+        if(!confirm("Apakah Anda yakin ingin menghapus prompt ini?")) return;
+
+        let currentUrl = getGasUrl();
+        if(!currentUrl) return;
+
+        try {
+            let response = await fetch(currentUrl, {
+                method: "POST",
+                body: JSON.stringify({ action: "hapus", id: id, tipe: tipe })
+            });
+            let result = await response.json();
+            
+            if(result.status === "sukses"){
+                showNotif("Data berhasil dihapus!", "sukses");
+                loadData(tipe); // Reload data
+            } else {
+                showNotif("Gagal menghapus: " + result.pesan, "error");
+            }
+        } catch(err) {
+            showNotif("Terjadi kesalahan jaringan.", "error");
+        }
+    }
+
+    function salinTeks(btn) {
+        let teks = btn.parentElement.previousElementSibling.innerText;
+        navigator.clipboard.writeText(teks).then(() => {
+            let originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check text-green-600"></i> Tersalin!`;
+            setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+        });
+    }
+
+    window.onload = () => {
+        const savedUrl = getGasUrl();
+        if(savedUrl) {
+            document.getElementById('input-gas-url').value = savedUrl;
+            loadData('gambar');
+        } else {
+            // Jika belum ada URL, langsung arahkan ke menu Pengaturan
+            pindahMenu('pengaturan');
+        }
+    };
+</script>
+
+</body>
+</html>
