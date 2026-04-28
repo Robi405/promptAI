@@ -48,9 +48,10 @@
         <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
             <i class="fa-solid fa-lock"></i>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">Login Vault AI</h2>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Login</h2>
         <p class="text-slate-500 text-sm mb-6">Masukkan password untuk mengakses aplikasi.<br><span class="text-xs font-bold text-indigo-500">(Default Password: admin123)</span></p>
         <form id="formLogin" onsubmit="handleLogin(event)">
+            <p id="loginError" class="text-red-500 text-sm font-semibold mb-3 hidden"></p>
             <div class="relative mb-4">
                 <input type="password" id="inputPasswordLogin" class="w-full border border-gray-200 p-3 pr-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-center" placeholder="Password..." required>
                 <button type="button" onclick="togglePassword('inputPasswordLogin', 'iconLogin')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-indigo-600 transition">
@@ -67,13 +68,6 @@
 <div id="app-container" class="relative border border-gray-200 hidden">
     
     <aside class="w-full md:w-72 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
-        <div class="p-6 border-b border-slate-800">
-            <h2 class="text-xl font-bold text-white flex items-center gap-3">
-                <div class="bg-indigo-500 text-white p-2 rounded-lg"><i class="fa-solid fa-bolt"></i></div>
-                AI Vault Pro
-            </h2>
-            <p class="text-xs text-slate-400 mt-2">Manajemen Prompt & Tools AI</p>
-        </div>
         <div class="p-4 flex-1 overflow-y-auto custom-scroll flex flex-col gap-1 text-sm font-medium">
             
             <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-2 px-3">Prompt Gambar</div>
@@ -648,8 +642,10 @@
         
         let btn = document.getElementById('btnLogin');
         let pass = document.getElementById('inputPasswordLogin').value;
+        let errorMsg = document.getElementById('loginError');
         let originalText = btn.innerHTML;
         
+        errorMsg.classList.add('hidden');
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...`;
         btn.disabled = true;
 
@@ -666,9 +662,13 @@
                 pindahMenu('daftar-gambar');
                 showNotif("Login Berhasil!", "sukses");
             } else {
+                errorMsg.innerText = result.pesan || "Password salah!";
+                errorMsg.classList.remove('hidden');
                 showNotif(result.pesan || "Password salah!", "error");
             }
         } catch (error) {
+            errorMsg.innerText = "Gagal terhubung ke server.";
+            errorMsg.classList.remove('hidden');
             showNotif("Gagal terhubung ke server.", "error");
         } finally {
             btn.innerHTML = originalText;
