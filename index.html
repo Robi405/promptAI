@@ -4,40 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Manajemen Prompt & Tool AI</title>
-    <!-- Tailwind CSS untuk Desain Modern -->
+
+    <!-- ======================================================= -->
+    <!-- !!! PASTE URL WEB APP APPS SCRIPT ANDA DI BAWAH INI !!! -->
+    <!-- ======================================================= -->
+    <script>
+        const GAS_URL = "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI";
+    </script>
+    <!-- ======================================================= -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome untuk Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        /* CSS tambahan agar sesuai jika di embed di blogger */
         #app-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #ffffff;
-            min-height: 600px;
+            max-width: 1000px; margin: 0 auto; background: #ffffff; min-height: 600px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border-radius: 1rem;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column;
         }
-        @media (min-width: 768px) {
-            #app-container { flex-direction: row; height: 75vh; max-height: 800px; }
-        }
+        @media (min-width: 768px) { #app-container { flex-direction: row; height: 75vh; max-height: 800px; } }
         .loader {
             border: 3px solid #e5e7eb; border-top: 3px solid #4f46e5; border-radius: 50%;
             width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        /* Tweak input file */
         input[type="file"]::file-selector-button {
             border: none; background: #4f46e5; color: white; padding: 8px 16px;
             border-radius: 6px; cursor: pointer; margin-right: 15px; transition: background .2s; font-weight: 500;
@@ -49,7 +44,6 @@
 
 <div id="app-container" class="relative border border-gray-200">
     
-    <!-- SIDEBAR NAVIGASI (MODERN) -->
     <aside class="w-full md:w-72 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
         <div class="p-6 border-b border-slate-800">
             <h2 class="text-xl font-bold text-white flex items-center gap-3">
@@ -83,20 +77,12 @@
             <button onclick="pindahMenu('input-tool')" id="nav-input-tool" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-plus w-5 text-center text-slate-400"></i> Tambah Tool Baru
             </button>
-
-            <div class="border-t border-slate-800 my-4"></div>
-            
-            <button onclick="pindahMenu('pengaturan')" id="nav-pengaturan" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
-                <i class="fa-solid fa-gear w-5 text-center text-slate-400"></i> Pengaturan
-            </button>
         </div>
     </aside>
 
-    <!-- AREA KONTEN UTAMA -->
     <main class="flex-1 bg-gray-50 flex flex-col overflow-hidden relative">
         <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
 
-            <!-- 1. DAFTAR PROMPT GAMBAR -->
             <div id="daftar-gambar" class="menu-konten">
                 <div class="flex justify-between items-end mb-6">
                     <div>
@@ -108,7 +94,6 @@
                 <div id="list-data-gambar" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
             </div>
 
-            <!-- 2. INPUT PROMPT GAMBAR -->
             <div id="input-gambar" class="menu-konten hidden max-w-2xl">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Tambah Prompt Gambar</h3>
                 <p class="text-slate-500 text-sm mb-6 pb-4 border-b">Simpan referensi visual dan prompt AI yang Anda gunakan.</p>
@@ -128,7 +113,6 @@
                 </form>
             </div>
 
-            <!-- 3. DAFTAR PROMPT VIDEO -->
             <div id="daftar-video" class="menu-konten hidden">
                 <div class="flex justify-between items-end mb-6">
                     <div>
@@ -140,7 +124,6 @@
                 <div id="list-data-video" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
             </div>
 
-            <!-- 4. INPUT PROMPT VIDEO -->
             <div id="input-video" class="menu-konten hidden max-w-2xl">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Tambah Prompt Video</h3>
                 <p class="text-slate-500 text-sm mb-6 pb-4 border-b">Simpan referensi visual dan instruksi pergerakan video Anda.</p>
@@ -160,7 +143,6 @@
                 </form>
             </div>
 
-            <!-- 5. DAFTAR TOOL AI (BARU) -->
             <div id="daftar-tool" class="menu-konten hidden">
                 <div class="flex justify-between items-end mb-6">
                     <div>
@@ -172,7 +154,6 @@
                 <div id="list-data-tool" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
             </div>
 
-            <!-- 6. INPUT TOOL AI (BARU) -->
             <div id="input-tool" class="menu-konten hidden max-w-2xl">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Tambah Tool AI Baru</h3>
                 <p class="text-slate-500 text-sm mb-6 pb-4 border-b">Simpan informasi platform AI yang berguna.</p>
@@ -195,27 +176,10 @@
                 </form>
             </div>
 
-            <!-- 7. PENGATURAN -->
-            <div id="pengaturan" class="menu-konten hidden max-w-2xl">
-                <h3 class="text-2xl font-bold text-slate-800 mb-2">Pengaturan Sistem</h3>
-                <p class="text-slate-500 text-sm mb-6 pb-4 border-b">Konfigurasi koneksi database Anda.</p>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-4">
-                    <label class="block font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-link text-indigo-500"></i> URL Web App (Google Apps Script)
-                    </label>
-                    <input type="url" id="input-gas-url" class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition font-mono text-sm mb-2" placeholder="https://script.google.com/macros/s/..." required>
-                    <p class="text-xs text-slate-500">Masukkan URL Web App hasil deploy Apps Script agar aplikasi terhubung ke Spreadsheet.</p>
-                </div>
-                <button onclick="simpanPengaturan()" class="bg-slate-800 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-900 shadow-md transition flex items-center gap-2">
-                    <i class="fa-solid fa-check"></i> Simpan URL Pengaturan
-                </button>
-            </div>
-
         </div>
     </main>
 </div>
 
-<!-- MODAL LIGHTBOX UNTUK GAMBAR -->
 <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-slate-900 bg-opacity-95 flex items-center justify-center p-4 backdrop-blur-sm">
     <button onclick="tutupLightbox()" class="absolute top-4 right-6 text-white hover:text-slate-300 text-4xl font-light transition">&times;</button>
     <div class="relative w-full max-w-5xl max-h-[90vh] flex justify-center items-center">
@@ -224,7 +188,6 @@
     </div>
 </div>
 
-<!-- MODAL EDIT PROMPT (GAMBAR & VIDEO) -->
 <div id="modal-edit" class="hidden fixed inset-0 z-[90] bg-slate-900 bg-opacity-70 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
         <div class="bg-indigo-600 text-white p-4 font-bold flex justify-between items-center">
@@ -243,7 +206,6 @@
     </div>
 </div>
 
-<!-- MODAL EDIT TOOL AI -->
 <div id="modal-edit-tool" class="hidden fixed inset-0 z-[90] bg-slate-900 bg-opacity-70 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
         <div class="bg-emerald-600 text-white p-4 font-bold flex justify-between items-center">
@@ -269,25 +231,12 @@
     </div>
 </div>
 
-<!-- NOTIFIKASI KUSTOM TAMPIL DI TENGAH -->
 <div id="custom-notif" class="hidden opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white px-6 py-4 rounded-xl shadow-2xl z-[200] flex items-center gap-3 transition-all duration-300 pointer-events-none scale-95">
     <i id="notif-icon" class="fa-solid fa-circle-check text-2xl"></i>
     <span id="notif-pesan" class="font-bold text-lg">Notifikasi</span>
 </div>
 
 <script>
-    // URL dari penyimpanan lokal
-    function getGasUrl() { return localStorage.getItem('gas_url') || ""; }
-
-    function simpanPengaturan() {
-        const url = document.getElementById('input-gas-url').value;
-        if (url.trim() === "") return showNotif("URL tidak boleh kosong!", "error");
-        if (!url.startsWith("https://script.google.com/")) return showNotif("Format salah! Harus berawalan https://script.google.com/", "error");
-        localStorage.setItem('gas_url', url.trim());
-        showNotif("URL berhasil disimpan!", "sukses");
-        setTimeout(() => pindahMenu('daftar-gambar'), 1000);
-    }
-
     // Manajemen Navigasi Tema Modern
     function pindahMenu(menuId) {
         document.querySelectorAll('.menu-konten').forEach(el => {
@@ -295,23 +244,26 @@
             el.classList.remove('animate-fade-in');
         });
         document.querySelectorAll('.nav-btn').forEach(el => {
-            el.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-indigo-500');
+            el.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-indigo-500', 'border-pink-500', 'border-emerald-500');
             el.classList.add('text-slate-300');
         });
 
         const target = document.getElementById(menuId);
-        target.classList.remove('hidden');
-        // Simple fade-in effect via inline style
-        target.style.animation = "fadeIn 0.3s ease-in-out forwards";
+        if(target) {
+            target.classList.remove('hidden');
+            target.style.animation = "fadeIn 0.3s ease-in-out forwards";
+        }
 
         let btnAktif = document.getElementById('nav-' + menuId);
-        btnAktif.classList.remove('text-slate-300');
-        btnAktif.classList.add('bg-slate-800', 'text-white');
-        
-        // Ganti warna border kiri sesuai kategori
-        if(menuId.includes('gambar') || menuId === 'pengaturan') btnAktif.classList.add('border-l-4', 'border-indigo-500');
-        if(menuId.includes('video')) btnAktif.classList.add('border-l-4', 'border-pink-500');
-        if(menuId.includes('tool')) btnAktif.classList.add('border-l-4', 'border-emerald-500');
+        if(btnAktif) {
+            btnAktif.classList.remove('text-slate-300');
+            btnAktif.classList.add('bg-slate-800', 'text-white');
+            
+            // Ganti warna border kiri sesuai kategori
+            if(menuId.includes('gambar')) btnAktif.classList.add('border-l-4', 'border-indigo-500');
+            if(menuId.includes('video')) btnAktif.classList.add('border-l-4', 'border-pink-500');
+            if(menuId.includes('tool')) btnAktif.classList.add('border-l-4', 'border-emerald-500');
+        }
 
         if(menuId === 'daftar-gambar') loadData('gambar');
         if(menuId === 'daftar-video') loadData('video');
@@ -371,11 +323,19 @@
         });
     }
 
+    // Pengecekan URL Sebelum Fetch
+    function cekUrlGas() {
+        if (!GAS_URL || GAS_URL === "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI") {
+            showNotif("Error: URL Apps Script belum diisi di kode HTML!", "error");
+            return false;
+        }
+        return true;
+    }
+
     // Submit Data Universal
     async function submitData(event, tipe) {
         event.preventDefault();
-        let currentUrl = getGasUrl();
-        if(!currentUrl) return showNotif("Harap simpan URL Apps Script", "error"), pindahMenu('pengaturan');
+        if(!cekUrlGas()) return;
 
         let btnSubmit = document.getElementById('btnSubmit' + tipe.charAt(0).toUpperCase() + tipe.slice(1));
         let originalText = btnSubmit.innerHTML;
@@ -401,12 +361,12 @@
         }
 
         try {
-            let response = await fetch(currentUrl, { method: "POST", body: JSON.stringify(payload) });
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             let result = await response.json();
             
             if(result.status === "sukses"){
                 showNotif("Data berhasil disimpan!", "sukses");
-                event.target.reset(); // Reset form otomatis
+                event.target.reset(); 
                 if(tipe !== 'tool') document.getElementById('preview-' + tipe + '-img').classList.add('hidden');
                 pindahMenu('daftar-' + tipe);
             } else {
@@ -418,8 +378,7 @@
 
     // Load Data
     async function loadData(tipe) {
-        let currentUrl = getGasUrl();
-        if(!currentUrl) return;
+        if(!cekUrlGas()) return;
 
         let listContainer = document.getElementById('list-data-' + tipe);
         let loading = document.getElementById('loading-daftar-' + tipe);
@@ -428,7 +387,7 @@
         loading.classList.remove('hidden');
 
         try {
-            let response = await fetch(currentUrl, { method: "POST", body: JSON.stringify({ action: "ambil", tipe: tipe }) });
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "ambil", tipe: tipe }) });
             let result = await response.json();
             loading.classList.add('hidden');
 
@@ -438,7 +397,6 @@
                     card.className = "bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden flex flex-col";
                     
                     if (tipe === 'gambar' || tipe === 'video') {
-                        // Render Gambar/Video
                         let errorImage = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200' fill='%23f3f4f6'%3E%3Crect width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EGambar Gagal Dimuat%3C/text%3E%3C/svg%3E";
                         let imageHTML = item.gambar ? 
                             `<div class="w-full h-56 bg-gray-100 cursor-pointer relative group flex items-center justify-center overflow-hidden" onclick="bukaLightbox('${item.gambar}')">
@@ -467,7 +425,6 @@
                             </div>
                         `;
                     } else if (tipe === 'tool') {
-                        // Render Tool AI
                         let safeNama = item.nama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         let safeDesk = item.deskripsi.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         
@@ -554,12 +511,13 @@
 
     // Fungsi Eksekusi Edit Universal
     async function eksekusiEdit(payload, btnId, tutupModalFunc) {
+        if(!cekUrlGas()) return;
         let btn = document.getElementById(btnId);
         let originalText = btn.innerHTML;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`; btn.disabled = true;
 
         try {
-            let response = await fetch(getGasUrl(), { method: "POST", body: JSON.stringify(payload) });
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             let result = await response.json();
             if(result.status === "sukses"){
                 tutupModalFunc();
@@ -572,9 +530,10 @@
 
     // Hapus Data
     async function hapusData(id, tipe) {
+        if(!cekUrlGas()) return;
         if(!confirm("Hapus data ini secara permanen?")) return;
         try {
-            let response = await fetch(getGasUrl(), { method: "POST", body: JSON.stringify({ action: "hapus", id: id, tipe: tipe }) });
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "hapus", id: id, tipe: tipe }) });
             let result = await response.json();
             if(result.status === "sukses"){ showNotif("Data terhapus!", "sukses"); loadData(tipe); } 
             else showNotif("Gagal: " + result.pesan, "error");
@@ -593,11 +552,13 @@
 
     // Inisialisasi awal
     window.onload = () => {
-        const savedUrl = getGasUrl();
-        if(savedUrl) {
-            document.getElementById('input-gas-url').value = savedUrl;
-            pindahMenu('daftar-gambar'); // Default landing page
-        } else pindahMenu('pengaturan');
+        pindahMenu('daftar-gambar'); 
+        // Peringatan jika URL belum diganti di script
+        if (GAS_URL === "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI") {
+            setTimeout(() => {
+                showNotif("Peringatan: Anda belum memasukkan URL Apps Script di dalam kode HTML!", "error");
+            }, 1000);
+        }
     };
 </script>
 
