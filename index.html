@@ -9,7 +9,7 @@
     <!-- !!! PASTE URL WEB APP APPS SCRIPT ANDA DI BAWAH INI !!! -->
     <!-- ======================================================= -->
     <script>
-        const GAS_URL = "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx3oA9tbhD_6TIh6XI2MllTLfxTW6OQfBWOiRJzeE9DYDGJQamgc_LaIllhz0MXt44G/exec";
     </script>
     <!-- ======================================================= -->
 
@@ -42,7 +42,29 @@
 </head>
 <body class="p-2 md:p-6">
 
-<div id="app-container" class="relative border border-gray-200">
+<!-- LOGIN OVERLAY (BARU) -->
+<div id="login-overlay" class="fixed inset-0 bg-slate-900 z-[1000] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all p-8 text-center">
+        <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Login Vault AI</h2>
+        <p class="text-slate-500 text-sm mb-6">Masukkan password untuk mengakses aplikasi.<br><span class="text-xs font-bold text-indigo-500">(Default Password: admin123)</span></p>
+        <form id="formLogin" onsubmit="handleLogin(event)">
+            <div class="relative mb-4">
+                <input type="password" id="inputPasswordLogin" class="w-full border border-gray-200 p-3 pr-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-center" placeholder="Password..." required>
+                <button type="button" onclick="togglePassword('inputPasswordLogin', 'iconLogin')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-indigo-600 transition">
+                    <i id="iconLogin" class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+            <button type="submit" id="btnLogin" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 shadow-md transition flex justify-center items-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i> Masuk
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="app-container" class="relative border border-gray-200 hidden">
     
     <aside class="w-full md:w-72 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
         <div class="p-6 border-b border-slate-800">
@@ -76,6 +98,11 @@
             </button>
             <button onclick="pindahMenu('input-tool')" id="nav-input-tool" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-plus w-5 text-center text-slate-400"></i> Tambah Tool Baru
+            </button>
+
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4 px-3">Pengaturan</div>
+            <button onclick="pindahMenu('ganti-password')" id="nav-ganti-password" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-key w-5 text-center text-amber-400"></i> Ganti Password
             </button>
         </div>
     </aside>
@@ -176,6 +203,44 @@
                 </form>
             </div>
 
+            <!-- 7. GANTI PASSWORD (BARU) -->
+            <div id="ganti-password" class="menu-konten hidden max-w-2xl">
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">Ganti Password</h3>
+                <p class="text-slate-500 text-sm mb-6 pb-4 border-b">Ubah kata sandi untuk mengamankan akses ke aplikasi ini.</p>
+                <form id="formGantiPassword" onsubmit="handleGantiPassword(event)">
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Password Lama <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassLama" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Masukkan password lama..." required>
+                            <button type="button" onclick="togglePassword('inputPassLama', 'iconPassLama')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassLama" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Password Baru <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassBaru" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Masukkan password baru..." required minlength="4">
+                            <button type="button" onclick="togglePassword('inputPassBaru', 'iconPassBaru')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassBaru" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Konfirmasi Password Baru <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassBaruConfirm" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Ulangi password baru..." required minlength="4">
+                            <button type="button" onclick="togglePassword('inputPassBaruConfirm', 'iconPassBaruConfirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassBaruConfirm" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" id="btnSubmitGantiPassword" class="w-full bg-amber-500 text-white font-bold py-3.5 rounded-xl hover:bg-amber-600 shadow-md hover:shadow-lg transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-key"></i> Simpan Password Baru
+                    </button>
+                </form>
+            </div>
+
         </div>
     </main>
 </div>
@@ -263,6 +328,7 @@
             if(menuId.includes('gambar')) btnAktif.classList.add('border-l-4', 'border-indigo-500');
             if(menuId.includes('video')) btnAktif.classList.add('border-l-4', 'border-pink-500');
             if(menuId.includes('tool')) btnAktif.classList.add('border-l-4', 'border-emerald-500');
+            if(menuId === 'ganti-password') btnAktif.classList.add('border-l-4', 'border-amber-500');
         }
 
         if(menuId === 'daftar-gambar') loadData('gambar');
@@ -550,9 +616,23 @@
         });
     }
 
+    // Fungsi Toggle Eye Password
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
     // Inisialisasi awal
     window.onload = () => {
-        pindahMenu('daftar-gambar'); 
         // Peringatan jika URL belum diganti di script
         if (GAS_URL === "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI") {
             setTimeout(() => {
@@ -560,6 +640,81 @@
             }, 1000);
         }
     };
+
+    // --- FUNGSI LOGIN & GANTI PASSWORD ---
+    async function handleLogin(event) {
+        event.preventDefault();
+        if(!cekUrlGas()) return;
+        
+        let btn = document.getElementById('btnLogin');
+        let pass = document.getElementById('inputPasswordLogin').value;
+        let originalText = btn.innerHTML;
+        
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...`;
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "cekLogin", password: pass }) 
+            });
+            let result = await response.json();
+            
+            if(result.status === "sukses" && result.valid) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                pindahMenu('daftar-gambar');
+                showNotif("Login Berhasil!", "sukses");
+            } else {
+                showNotif(result.pesan || "Password salah!", "error");
+            }
+        } catch (error) {
+            showNotif("Gagal terhubung ke server.", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function handleGantiPassword(event) {
+        event.preventDefault();
+        if(!cekUrlGas()) return;
+
+        let passLama = document.getElementById('inputPassLama').value;
+        let passBaru = document.getElementById('inputPassBaru').value;
+        let passConfirm = document.getElementById('inputPassBaruConfirm').value;
+
+        if(passBaru !== passConfirm) {
+            showNotif("Konfirmasi password baru tidak cocok!", "error");
+            return;
+        }
+
+        let btn = document.getElementById('btnSubmitGantiPassword');
+        let originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "gantiPassword", passwordLama: passLama, passwordBaru: passBaru }) 
+            });
+            let result = await response.json();
+            
+            if(result.status === "sukses") {
+                showNotif(result.pesan, "sukses");
+                event.target.reset();
+            } else {
+                showNotif(result.pesan, "error");
+            }
+        } catch (error) {
+            showNotif("Terjadi kesalahan jaringan.", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
 </script>
 
 </body>
