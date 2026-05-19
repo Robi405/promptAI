@@ -3,658 +3,834 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Print Label 150x100mm (TSPL)</title>
+    <title>Aplikasi Manajemen Prompt & Tool AI</title>
+
+    <!-- ======================================================= -->
+    <!-- !!! PASTE URL WEB APP APPS SCRIPT ANDA DI BAWAH INI !!! -->
+    <!-- ======================================================= -->
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx3oA9tbhD_6TIh6XI2MllTLfxTW6OQfBWOiRJzeE9DYDGJQamgc_LaIllhz0MXt44G/exec";
+    </script>
+    <!-- ======================================================= -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        #print-section { display: none; }
-        
-        /* Animasi Loading Print */
-        @keyframes pulse-fast {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        #app-container {
+            max-width: 1000px; margin: 0 auto; background: #ffffff; min-height: 600px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 20px rgba(0,0,0,0.02);
+            border-radius: 1.25rem; overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
-        .animate-pulse-fast { animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-
-        /* Hover effect untuk preview gambar */
-        .preview-item {
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: zoom-in;
+        @media (min-width: 768px) { #app-container { flex-direction: row; height: 80vh; max-height: 850px; } }
+        .loader {
+            border: 3px solid #f1f5f9; border-top: 3px solid #4f46e5; border-radius: 50%;
+            width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 20px auto;
         }
-        .preview-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            border-color: #3b82f6; 
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        input[type="file"]::file-selector-button {
+            border: none; background: #4f46e5; color: white; padding: 8px 16px;
+            border-radius: 0.5rem; cursor: pointer; margin-right: 15px; transition: all .2s; font-weight: 500;
         }
-
-        /* Tab Active Style */
-        .tab-active { border-bottom-color: #2563eb; color: #1e3a8a; background-color: #eff6ff; }
-        .tab-inactive { border-bottom-color: transparent; color: #64748b; }
-        .tab-inactive:hover { color: #334155; background-color: #f8fafc; }
+        input[type="file"]::file-selector-button:hover { background: #4338ca; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans relative pb-20">
+<body class="p-2 md:p-6 flex items-center justify-center min-h-screen">
 
-    <div id="image-modal" class="hidden fixed inset-0 bg-slate-900/90 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeModal()">
-        <div class="relative max-w-full max-h-full flex flex-col items-center">
-            <button onclick="closeModal()" class="absolute -top-10 right-0 text-white hover:text-red-400 transition-colors">
-                <i data-lucide="x-circle" class="w-8 h-8"></i>
-            </button>
-            <img id="modal-image" src="" alt="Pratinjau Label" class="max-w-full max-h-[85vh] object-contain bg-white rounded shadow-2xl">
-            <p class="text-white mt-4 text-sm bg-slate-800/50 px-4 py-2 rounded-full">Pratinjau - Klik di mana saja untuk menutup</p>
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[1000] flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all p-8 text-center border border-slate-100">
+        <div class="bg-indigo-50 text-indigo-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm border border-indigo-100">
+            <i class="fa-solid fa-lock"></i>
         </div>
-    </div>
-
-    <div id="printing-overlay" class="hidden fixed inset-0 bg-slate-900/90 z-50 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-        <i data-lucide="printer" class="w-16 h-16 animate-pulse-fast mb-4 text-blue-400"></i>
-        <h2 class="text-2xl font-bold mb-2">Sedang Mencetak...</h2>
-        <p class="text-slate-300 text-center max-w-sm mb-4">Mengirim data ke Printer Bluetooth. <br>Kecepatan Ekstrem (1ms).</p>
-        <div class="w-64 bg-slate-700 rounded-full h-3">
-            <div id="print-progress-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-        <p id="print-progress-text" class="mt-2 text-sm text-blue-200">0%</p>
-    </div>
-
-    <div id="app-ui" class="max-w-3xl mx-auto p-4 md:p-8">
-        
-        <header class="text-center mb-6">
-            <div class="inline-flex items-center justify-center p-3 bg-blue-100 text-blue-600 rounded-full mb-4">
-                <i data-lucide="printer" class="w-8 h-8"></i>
-            </div>
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Aplikasi Cetak Label Thermal</h1>
-            <p class="text-slate-600">Dukungan cetak PDF & Manual dengan Kecepatan 1ms</p>
-        </header>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div id="bt-icon-bg" class="bg-slate-100 p-3 rounded-full transition-colors">
-                        <i data-lucide="bluetooth" id="bt-icon" class="text-slate-500 w-6 h-6 transition-colors"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800">Koneksi Bluetooth</h3>
-                        <p class="text-sm text-slate-500">
-                            Status: <span id="bt-status" class="text-slate-500 font-medium">Belum Terhubung</span>
-                        </p>
-                        <p id="bt-device-name" class="text-xs font-bold text-blue-600 hidden"></p>
-                    </div>
-                </div>
-                <div class="w-full sm:w-auto flex flex-wrap gap-2">
-                    <button id="bt-connect-btn" onclick="connectBluetooth()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-md">
-                        <i data-lucide="search" class="w-4 h-4"></i> Sambungkan
-                    </button>
-                    
-                    <button id="bt-test-btn" onclick="testPrinter()" class="hidden w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-medium transition-colors items-center justify-center gap-2 shadow-md">
-                        <i data-lucide="file-check-2" class="w-4 h-4"></i> Test
-                    </button>
-
-                    <button id="bt-disconnect-btn" onclick="disconnectBluetooth()" class="hidden w-full sm:w-auto bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2.5 rounded-xl font-medium transition-colors items-center justify-center gap-2">
-                        <i data-lucide="bluetooth-off" class="w-4 h-4"></i> Putuskan
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
-                <input type="checkbox" id="fix-bg-checkbox" checked class="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">
-                <label for="fix-bg-checkbox" class="font-medium text-slate-700 cursor-pointer text-sm">
-                    Perbaikan Warna Hitam-Putih
-                    <span class="block text-slate-400 text-xs font-normal">Pastikan ini dicentang agar hasil cetakan tidak blank (hitam).</span>
-                </label>
-            </div>
-        </div>
-
-        <div id="bt-warning" class="hidden mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-sm text-yellow-800 flex flex-col gap-2">
-            <div class="flex gap-3 items-start">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5"></i>
-                <div id="bt-warning-text">Browser atau lingkungan ini tidak mendukung Web Bluetooth. Buka file ini dari GitHub Pages (HTTPS).</div>
-            </div>
-        </div>
-
-        <div class="flex mb-6 border-b-2 border-slate-200">
-            <button onclick="switchTab('pdf')" id="tab-btn-pdf" class="flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-active">
-                <i data-lucide="file-text" class="w-5 h-5 inline-block mr-1 -mt-1"></i> Mode Resi PDF
-            </button>
-            <button onclick="switchTab('manual')" id="tab-btn-manual" class="flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-inactive">
-                <i data-lucide="pen-tool" class="w-5 h-5 inline-block mr-1 -mt-1"></i> Mode Bebas (Manual)
-            </button>
-        </div>
-
-        <div id="section-pdf" class="block">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 hover:bg-slate-100 cursor-pointer relative" id="drop-zone">
-                    <i data-lucide="file-up" class="w-10 h-10 text-slate-400 mb-3"></i>
-                    <h3 class="text-lg font-semibold mb-1 text-center">Pilih File PDF Resi</h3>
-                    <input type="file" id="pdf-upload" accept="application/pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                    <button class="mt-4 bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-lg font-medium transition-colors pointer-events-none">
-                        Browse File
-                    </button>
-                </div>
-                
-                <div id="file-list-container" class="hidden mt-4">
-                    <div class="flex justify-between items-center mb-2 border-b pb-2">
-                        <h4 class="font-semibold text-slate-700">Daftar Label PDF:</h4>
-                        <span id="total-pages-display" class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">0 Halaman</span>
-                    </div>
-                    <div id="screen-preview" class="flex gap-4 overflow-x-auto pb-4 pt-2">
-                        </div>
-                </div>
-            </div>
-
-            <div id="loading-indicator" class="hidden flex-col items-center justify-center py-6">
-                <i data-lucide="loader-2" class="w-8 h-8 text-blue-600 animate-spin mb-2"></i>
-                <p id="loading-text" class="text-slate-600 font-medium">Membaca PDF...</p>
-            </div>
-
-            <div id="action-area" class="hidden">
-                <div class="flex flex-col gap-3">
-                    <button id="btn-direct-print" onclick="startDirectPrint('pdf')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg text-lg">
-                        <i data-lucide="printer" class="w-6 h-6"></i> Cetak Label PDF Sekarang!
-                    </button>
-                    <button onclick="resetApp()" class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 rounded-xl font-medium text-sm">
-                        Reset Data
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="section-manual" class="hidden">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                
-                <div class="mb-4">
-                    <label class="block font-bold text-slate-700 mb-2">1. Sisipkan Gambar/Logo (Opsional)</label>
-                    <input type="file" id="manual-image" accept="image/*" onchange="renderManualCanvas()" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-50 cursor-pointer">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block font-bold text-slate-700 mb-2">2. Masukkan Kalimat Bebas</label>
-                    <textarea id="manual-text" oninput="renderManualCanvas()" rows="5" class="w-full p-4 border border-slate-300 rounded-lg bg-slate-50 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ketik teks yang ingin dicetak di sini... Teks akan otomatis turun ke baris baru jika terlalu panjang."></textarea>
-                </div>
-
-                <div class="mt-6 border-t pt-4 flex flex-col items-center">
-                    <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2"><i data-lucide="eye" class="w-5 h-5"></i> Pratinjau Kertas 150x100mm:</h4>
-                    
-                    <canvas id="manual-canvas" width="800" height="1200" class="hidden"></canvas>
-                    
-                    <div class="relative preview-item group" onclick="openModal('manual-canvas')">
-                        <img id="manual-preview-img" class="w-48 h-auto object-contain border border-slate-300 shadow-md bg-white rounded" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
-                        <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded transition-opacity">
-                            <i data-lucide="zoom-in" class="text-white w-8 h-8"></i>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="flex flex-col gap-3">
-                <button id="btn-manual-print" onclick="startDirectPrint('manual')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg text-lg">
-                    <i data-lucide="printer" class="w-6 h-6"></i> Cetak Label Manual Sekarang!
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Login</h2>
+        <p class="text-slate-500 text-sm mb-6">Masukkan password untuk mengakses aplikasi.</p>
+        <form id="formLogin" onsubmit="handleLogin(event)">
+            <p id="loginError" class="text-red-500 text-sm font-semibold mb-3 hidden"></p>
+            <div class="relative mb-4">
+                <input type="password" id="inputPasswordLogin" class="w-full border border-gray-200 p-3 pr-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-center" placeholder="Password..." required>
+                <button type="button" onclick="togglePassword('inputPasswordLogin', 'iconLogin')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-indigo-600 transition">
+                    <i id="iconLogin" class="fa-solid fa-eye"></i>
                 </button>
             </div>
-        </div>
-
+            <button type="submit" id="btnLogin" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 shadow-md transition flex justify-center items-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i> Masuk
+            </button>
+        </form>
     </div>
+</div>
 
-    <div id="print-section"></div>
-
-    <script>
-        lucide.createIcons();
-
-        // --- SISTEM TABS ---
-        function switchTab(mode) {
-            const tabPdf = document.getElementById('tab-btn-pdf');
-            const tabManual = document.getElementById('tab-btn-manual');
-            const secPdf = document.getElementById('section-pdf');
-            const secManual = document.getElementById('section-manual');
-
-            if (mode === 'pdf') {
-                tabPdf.className = "flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-active";
-                tabManual.className = "flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-inactive";
-                secPdf.classList.replace('hidden', 'block');
-                secManual.classList.replace('block', 'hidden');
-            } else {
-                tabManual.className = "flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-active";
-                tabPdf.className = "flex-1 py-3 text-center font-bold border-b-2 transition-colors tab-inactive";
-                secManual.classList.replace('hidden', 'block');
-                secPdf.classList.replace('block', 'hidden');
-                renderManualCanvas(); // Render kosong pertama kali
-            }
-        }
-
-        // --- FITUR MODAL ---
-        function openModal(canvasId) {
-            const canvas = document.getElementById(canvasId);
-            if(canvas) {
-                const dataUrl = canvas.toDataURL('image/png');
-                document.getElementById('modal-image').src = dataUrl;
-                document.getElementById('image-modal').classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; 
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('image-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // --- BLUETOOTH CORE ---
-        const warningBox = document.getElementById('bt-warning');
-        if (!navigator.bluetooth) {
-            warningBox.classList.remove('hidden');
-        } else if (!window.isSecureContext) {
-            warningBox.classList.remove('hidden');
-        }
-
-        let btDevice = null;
-        let btCharacteristic = null;
-
-        async function connectBluetooth() {
-            try {
-                updateBluetoothUI('connecting');
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', 
-                        '0000ffe0-0000-1000-8000-00805f9b34fb', 
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  
-                    ]
-                });
-
-                btDevice = device;
-                btDevice.addEventListener('gattserverdisconnected', handleDisconnect);
-
-                const server = await device.gatt.connect();
-                const services = await server.getPrimaryServices();
-                
-                for (const service of services) {
-                    const characteristics = await service.getCharacteristics();
-                    for (const char of characteristics) {
-                        if (char.properties.write || char.properties.writeWithoutResponse) {
-                            btCharacteristic = char;
-                            break;
-                        }
-                    }
-                    if (btCharacteristic) break;
-                }
-
-                if (!btCharacteristic) throw new Error("Tidak menemukan port write pada perangkat ini.");
-                updateBluetoothUI('connected', device.name);
-            } catch (error) {
-                console.error(error);
-                updateBluetoothUI('disconnected');
-                if (error.name === 'SecurityError') alert("Akses Bluetooth Ditolak!\nBuka dari HTTPS agar diizinkan browser.");
-                else if (error.name !== 'NotFoundError') alert("Gagal menyambung: " + error.message);
-            }
-        }
-
-        function disconnectBluetooth() {
-            if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
-        }
-
-        function handleDisconnect() {
-            btCharacteristic = null;
-            btDevice = null;
-            updateBluetoothUI('disconnected');
-        }
-
-        function updateBluetoothUI(state, name = '') {
-            const status = document.getElementById('bt-status');
-            const nameEl = document.getElementById('bt-device-name');
-            const iconBg = document.getElementById('bt-icon-bg');
-            const icon = document.getElementById('bt-icon');
-            const connectBtn = document.getElementById('bt-connect-btn');
-            const disconnectBtn = document.getElementById('bt-disconnect-btn');
-            const testBtn = document.getElementById('bt-test-btn');
+<div id="app-container" class="relative border border-gray-200 hidden">
+    
+    <aside class="w-full md:w-72 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
+        <div class="p-4 flex-1 overflow-y-auto custom-scroll flex flex-col gap-1 text-sm font-medium">
             
-            if (state === 'connecting') {
-                status.innerHTML = '<span class="text-yellow-600">Menyambungkan...</span>';
-                icon.classList.add('animate-pulse');
-            } else if (state === 'connected') {
-                status.innerHTML = '<span class="text-green-600 font-bold">Siap Cetak!</span>';
-                nameEl.textContent = name;
-                nameEl.classList.remove('hidden');
-                iconBg.classList.replace('bg-slate-100', 'bg-green-100');
-                icon.classList.replace('text-slate-500', 'text-green-600');
-                icon.classList.remove('animate-pulse');
-                
-                connectBtn.classList.replace('flex', 'hidden');
-                disconnectBtn.classList.replace('hidden', 'flex');
-                testBtn.classList.replace('hidden', 'flex');
-            } else {
-                status.innerHTML = '<span class="text-slate-500">Belum Terhubung</span>';
-                nameEl.classList.add('hidden');
-                iconBg.classList.replace('bg-green-100', 'bg-slate-100');
-                icon.classList.replace('text-green-600', 'text-slate-500');
-                icon.classList.remove('animate-pulse');
-                
-                connectBtn.classList.replace('hidden', 'flex');
-                disconnectBtn.classList.replace('flex', 'hidden');
-                testBtn.classList.replace('flex', 'hidden');
-            }
-        }
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-2 px-3">Prompt Gambar</div>
+            <button onclick="pindahMenu('daftar-gambar')" id="nav-daftar-gambar" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-image w-5 text-center text-indigo-400"></i> Galeri Gambar
+            </button>
+            <button onclick="pindahMenu('input-gambar')" id="nav-input-gambar" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-cloud-arrow-up w-5 text-center text-slate-400"></i> Input Gambar
+            </button>
 
-        // --- PENGIRIMAN DATA DENGAN JEDA 1ms (TERCEPAT) ---
-        async function sendDataToPrinterInChunks(data, progressCallback) {
-            const CHUNK_SIZE = 100; 
-            for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-                const chunk = data.slice(i, i + CHUNK_SIZE);
-                try {
-                    if (btCharacteristic.properties.writeWithoutResponse) {
-                        await btCharacteristic.writeValueWithoutResponse(chunk);
-                    } else {
-                        await btCharacteristic.writeValue(chunk);
-                    }
-                } catch (e) {
-                    console.warn("Retrying chunk...", e);
-                    await new Promise(r => setTimeout(r, 50)); 
-                    if (btCharacteristic.properties.writeWithoutResponse) {
-                        await btCharacteristic.writeValueWithoutResponse(chunk);
-                    } else {
-                        await btCharacteristic.writeValue(chunk);
-                    }
-                }
-                
-                // JEDA 1ms - SUPER EKSTREM
-                await new Promise(resolve => setTimeout(resolve, 1));
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4 px-3">Prompt Video</div>
+            <button onclick="pindahMenu('daftar-video')" id="nav-daftar-video" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-film w-5 text-center text-pink-400"></i> Galeri Video
+            </button>
+            <button onclick="pindahMenu('input-video')" id="nav-input-video" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-cloud-arrow-up w-5 text-center text-slate-400"></i> Input Video
+            </button>
 
-                if (progressCallback && i % (CHUNK_SIZE * 10) === 0) {
-                    progressCallback(i / data.length);
-                }
-            }
-            if(progressCallback) progressCallback(1);
-        }
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4 px-3">Direktori Tool AI</div>
+            <button onclick="pindahMenu('daftar-tool')" id="nav-daftar-tool" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-cubes w-5 text-center text-emerald-400"></i> Daftar Tool AI
+            </button>
+            <button onclick="pindahMenu('input-tool')" id="nav-input-tool" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-plus w-5 text-center text-slate-400"></i> Tambah Tool Baru
+            </button>
 
-        async function testPrinter() {
-            if (!btCharacteristic) {
-                alert("Printer belum terhubung!");
-                return;
-            }
-            try {
-                let tsplCmd = "SIZE 100 mm,150 mm\r\nGAP 2 mm,0\r\nDIRECTION 1\r\nCLS\r\n";
-                tsplCmd += "TEXT 50,50,\"4\",0,1,1,\"=== TEST KONEKSI PRINTER ===\"\r\n";
-                tsplCmd += "TEXT 50,150,\"3\",0,1,1,\"Kecepatan Transfer Maksimal: 1ms.\"\r\n";
-                tsplCmd += "PRINT 1\r\n";
-                
-                const encoder = new TextEncoder();
-                await sendDataToPrinterInChunks(encoder.encode(tsplCmd), null);
-            } catch (error) {
-                alert("Gagal mengirim test print: " + error.message);
-            }
-        }
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4 px-3">Pengaturan</div>
+            <button onclick="pindahMenu('ganti-password')" id="nav-ganti-password" class="nav-btn flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-key w-5 text-center text-amber-400"></i> Ganti Password
+            </button>
+        </div>
+    </aside>
 
-        // --- FUNGSI CANVAS MODE MANUAL (MEMBUAT LABEL BEBAS) ---
-        async function renderManualCanvas() {
-            const canvas = document.getElementById('manual-canvas');
-            const ctx = canvas.getContext('2d');
+    <main class="flex-1 bg-gray-50 flex flex-col overflow-hidden relative">
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
+
+            <div id="daftar-gambar" class="menu-konten">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h3 class="text-3xl font-bold text-slate-800 tracking-tight">Galeri Prompt Gambar</h3>
+                        <p class="text-slate-500 text-sm mt-1">Koleksi referensi prompt AI untuk gambar.</p>
+                    </div>
+                </div>
+                <div id="loading-daftar-gambar" class="hidden"><div class="loader"></div><p class="text-center text-sm text-slate-500 font-medium">Memuat data...</p></div>
+                <div id="list-data-gambar" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
+            </div>
+
+            <div id="input-gambar" class="menu-konten hidden max-w-2xl">
+                <h3 class="text-3xl font-bold text-slate-800 mb-2 tracking-tight">Tambah Prompt Gambar</h3>
+                <p class="text-slate-500 text-sm mb-6 pb-4 border-b border-slate-100">Simpan referensi visual dan prompt AI yang Anda gunakan.</p>
+                <form id="formGambar" onsubmit="submitData(event, 'gambar')">
+                    <div class="mb-5 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Unggah Gambar <span class="text-red-500">*</span></label>
+                        <input type="file" id="fileGambar" accept="image/*" class="w-full border border-gray-200 p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none transition" required onchange="previewImage(event, 'preview-gambar-img')">
+                        <img id="preview-gambar-img" class="hidden mt-4 w-full max-h-72 object-contain border border-gray-200 rounded-lg bg-gray-100" />
+                    </div>
+                    <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Prompt AI <span class="text-red-500">*</span></label>
+                        <textarea id="teksPromptGambar" rows="5" class="w-full border border-gray-200 p-4 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition custom-scroll" placeholder="Ketikkan prompt detail di sini..." required></textarea>
+                    </div>
+                    <button type="submit" id="btnSubmitGambar" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 shadow-md hover:shadow-lg transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Prompt Gambar
+                    </button>
+                </form>
+            </div>
+
+            <div id="daftar-video" class="menu-konten hidden">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h3 class="text-3xl font-bold text-slate-800 tracking-tight">Galeri Prompt Video</h3>
+                        <p class="text-slate-500 text-sm mt-1">Koleksi referensi prompt AI untuk video generator.</p>
+                    </div>
+                </div>
+                <div id="loading-daftar-video" class="hidden"><div class="loader"></div><p class="text-center text-sm text-slate-500 font-medium">Memuat data...</p></div>
+                <div id="list-data-video" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
+            </div>
+
+            <div id="input-video" class="menu-konten hidden max-w-2xl">
+                <h3 class="text-3xl font-bold text-slate-800 mb-2 tracking-tight">Tambah Prompt Video</h3>
+                <p class="text-slate-500 text-sm mb-6 pb-4 border-b border-slate-100">Simpan referensi visual dan instruksi pergerakan video Anda.</p>
+                <form id="formVideo" onsubmit="submitData(event, 'video')">
+                    <div class="mb-5 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Gambar Referensi (Opsional)</label>
+                        <input type="file" id="fileVideo" accept="image/*" class="w-full border border-gray-200 p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none transition" onchange="previewImage(event, 'preview-video-img')">
+                        <img id="preview-video-img" class="hidden mt-4 w-full max-h-72 object-contain border border-gray-200 rounded-lg bg-gray-100" />
+                    </div>
+                    <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Prompt AI <span class="text-red-500">*</span></label>
+                        <textarea id="teksPromptVideo" rows="5" class="w-full border border-gray-200 p-4 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition custom-scroll" placeholder="Ketikkan instruksi prompt video di sini..." required></textarea>
+                    </div>
+                    <button type="submit" id="btnSubmitVideo" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 shadow-md hover:shadow-lg transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Prompt Video
+                    </button>
+                </form>
+            </div>
+
+            <div id="daftar-tool" class="menu-konten hidden">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h3 class="text-3xl font-bold text-slate-800 tracking-tight">Direktori Tool AI</h3>
+                        <p class="text-slate-500 text-sm mt-1">Daftar website dan aplikasi AI favorit Anda.</p>
+                    </div>
+                </div>
+                <div id="loading-daftar-tool" class="hidden"><div class="loader"></div><p class="text-center text-sm text-slate-500 font-medium">Memuat data...</p></div>
+                <div id="list-data-tool" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
+            </div>
+
+            <div id="input-tool" class="menu-konten hidden max-w-2xl">
+                <h3 class="text-3xl font-bold text-slate-800 mb-2 tracking-tight">Tambah Tool AI Baru</h3>
+                <p class="text-slate-500 text-sm mb-6 pb-4 border-b border-slate-100">Simpan informasi platform AI yang berguna.</p>
+                <form id="formTool" onsubmit="submitData(event, 'tool')">
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Nama Tool AI <span class="text-red-500">*</span></label>
+                        <input type="text" id="inputNamaTool" class="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="Contoh: ChatGPT, Midjourney..." required>
+                    </div>
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Deskripsi Kegunaan <span class="text-red-500">*</span></label>
+                        <textarea id="inputDeskripsiTool" rows="3" class="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition custom-scroll" placeholder="Contoh: Tool untuk mengenerate artikel SEO..." required></textarea>
+                    </div>
+                    <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Link Website (Opsional)</label>
+                        <input type="url" id="inputWebsiteTool" class="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="https://...">
+                    </div>
+                    <button type="submit" id="btnSubmitTool" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 shadow-md hover:shadow-lg transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Simpan Data Tool AI
+                    </button>
+                </form>
+            </div>
+
+            <!-- GANTI PASSWORD -->
+            <div id="ganti-password" class="menu-konten hidden max-w-2xl">
+                <h3 class="text-3xl font-bold text-slate-800 mb-2 tracking-tight">Ganti Password</h3>
+                <p class="text-slate-500 text-sm mb-6 pb-4 border-b border-slate-100">Ubah kata sandi untuk mengamankan akses ke aplikasi ini.</p>
+                <form id="formGantiPassword" onsubmit="handleGantiPassword(event)">
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Password Lama <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassLama" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Masukkan password lama..." required>
+                            <button type="button" onclick="togglePassword('inputPassLama', 'iconPassLama')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassLama" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Password Baru <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassBaru" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Masukkan password baru..." required minlength="4">
+                            <button type="button" onclick="togglePassword('inputPassBaru', 'iconPassBaru')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassBaru" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <label class="block font-semibold text-slate-700 mb-2">Konfirmasi Password Baru <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" id="inputPassBaruConfirm" class="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition" placeholder="Ulangi password baru..." required minlength="4">
+                            <button type="button" onclick="togglePassword('inputPassBaruConfirm', 'iconPassBaruConfirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-amber-600 transition">
+                                <i id="iconPassBaruConfirm" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" id="btnSubmitGantiPassword" class="w-full bg-amber-500 text-white font-bold py-3.5 rounded-xl hover:bg-amber-600 shadow-md hover:shadow-lg transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-key"></i> Simpan Password Baru
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- LIGHTBOX GAMBAR -->
+<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-slate-900 bg-opacity-95 flex items-center justify-center p-4 backdrop-blur-sm">
+    <button onclick="tutupLightbox()" class="absolute top-4 right-6 text-white hover:text-slate-300 text-4xl font-light transition">&times;</button>
+    <div class="relative w-full max-w-5xl max-h-[90vh] flex justify-center items-center">
+        <i id="lightbox-loading" class="fa-solid fa-circle-notch fa-spin text-white text-4xl absolute"></i>
+        <img id="lightbox-img" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl relative z-10 hidden" onload="document.getElementById('lightbox-loading').classList.add('hidden'); this.classList.remove('hidden');" />
+    </div>
+</div>
+
+<!-- MODAL EDIT PROMPT -->
+<div id="modal-edit" class="hidden fixed inset-0 z-[90] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div id="modal-edit-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 opacity-0 transition-all duration-300 border border-slate-100">
+        <div class="bg-indigo-50 text-indigo-700 p-5 font-bold flex justify-between items-center border-b border-indigo-100">
+            <span class="flex items-center gap-2 text-lg"><i class="fa-solid fa-pen-to-square"></i> Edit Prompt</span>
+            <button onclick="tutupModalEdit()" class="text-indigo-400 hover:text-indigo-700 text-2xl transition bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm">&times;</button>
+        </div>
+        <div class="p-7">
+            <input type="hidden" id="edit-id">
+            <input type="hidden" id="edit-tipe">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Prompt Teks:</label>
+            <textarea id="edit-teks" rows="6" class="w-full border border-gray-200 p-4 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition custom-scroll mb-6"></textarea>
+            <button onclick="simpanEdit()" id="btnSimpanEdit" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 shadow-md hover:shadow-lg transition">
+                Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT TOOL AI -->
+<div id="modal-edit-tool" class="hidden fixed inset-0 z-[90] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div id="modal-edit-tool-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 opacity-0 transition-all duration-300 border border-slate-100">
+        <div class="bg-emerald-50 text-emerald-700 p-5 font-bold flex justify-between items-center border-b border-emerald-100">
+            <span class="flex items-center gap-2 text-lg"><i class="fa-solid fa-pen-to-square"></i> Edit Tool AI</span>
+            <button onclick="tutupModalEditTool()" class="text-emerald-400 hover:text-emerald-700 text-2xl transition bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm">&times;</button>
+        </div>
+        <div class="p-7">
+            <input type="hidden" id="edit-tool-id">
             
-            // Bersihkan Canvas jadi Putih (800x1200 adalah standar rasio 100x150mm di 203dpi)
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, 800, 1200);
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Tool:</label>
+            <input type="text" id="edit-tool-nama" class="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none mb-4">
+            
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Deskripsi:</label>
+            <textarea id="edit-tool-deskripsi" rows="3" class="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none custom-scroll mb-4"></textarea>
 
-            // Pengaturan Font
-            ctx.fillStyle = 'black';
-            ctx.font = 'bold 36px sans-serif';
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Website URL (Opsional):</label>
+            <input type="url" id="edit-tool-website" class="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none mb-6">
 
-            let currentY = 50; // Jarak tepi atas
-            const marginX = 40; // Jarak tepi kiri & kanan
+            <button onclick="simpanEditTool()" id="btnSimpanEditTool" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 shadow-md hover:shadow-lg transition">
+                Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</div>
 
-            // Fungsi untuk menggambar teks agar otomatis turun baris (Word Wrap)
-            function wrapText(text, x, y, maxWidth, lineHeight) {
-                const paragraphs = text.split('\n');
-                for (let i = 0; i < paragraphs.length; i++) {
-                    let words = paragraphs[i].split(' ');
-                    let line = '';
-                    for (let n = 0; n < words.length; n++) {
-                        let testLine = line + words[n] + ' ';
-                        let metrics = ctx.measureText(testLine);
-                        let testWidth = metrics.width;
-                        if (testWidth > maxWidth && n > 0) {
-                            ctx.fillText(line, x, y);
-                            line = words[n] + ' ';
-                            y += lineHeight;
-                        } else {
-                            line = testLine;
-                        }
-                    }
-                    ctx.fillText(line, x, y);
-                    y += lineHeight; // Jarak antar paragraf
-                }
-                return y;
-            }
+<!-- MODAL KONFIRMASI HAPUS (BARU) -->
+<div id="modal-hapus" class="hidden fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div id="modal-hapus-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 opacity-0 transition-all duration-300 border border-slate-100">
+        <div class="p-8 text-center">
+            <div class="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-5 text-rose-500 text-4xl shadow-inner border border-rose-100">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-2 tracking-tight">Hapus Data?</h3>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Data yang dihapus tidak dapat dikembalikan lagi. Apakah Anda yakin ingin melanjutkannya?</p>
+            <div class="flex gap-3">
+                <button onclick="batalHapus()" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition">Batal</button>
+                <button onclick="konfirmasiHapus()" id="btnKonfirmasiHapus" class="flex-1 bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 shadow-md shadow-rose-200 transition">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-            const imgFile = document.getElementById('manual-image').files[0];
-            const textContent = document.getElementById('manual-text').value;
+<!-- TOAST NOTIFICATION -->
+<div id="custom-notif" class="hidden opacity-0 fixed top-8 left-1/2 transform -translate-x-1/2 text-white px-6 py-4 rounded-2xl shadow-xl z-[200] flex items-center gap-3 transition-all duration-300 pointer-events-none scale-95 backdrop-blur-md border border-white/20">
+    <i id="notif-icon" class="fa-solid fa-circle-check text-2xl"></i>
+    <span id="notif-pesan" class="font-semibold text-base">Notifikasi</span>
+</div>
 
-            // Jika ada gambar, gambar terlebih dahulu di atas
-            if (imgFile) {
-                const img = new Image();
-                img.src = URL.createObjectURL(imgFile);
-                
-                // Menggunakan Promise agar canvas tidak dirender sebelum gambar selesai di-load
-                await new Promise(resolve => {
-                    img.onload = () => {
-                        const maxImgWidth = 720;
-                        const maxImgHeight = 500; // Batas tinggi gambar agar sisanya bisa untuk teks
-                        let w = img.width;
-                        let h = img.height;
+<script>
+    // Global variable untuk fungsi Hapus Data
+    let itemAkanDihapus = { id: null, tipe: null };
 
-                        // Menyesuaikan rasio (Resize proportional)
-                        if (w > maxImgWidth) { h = h * (maxImgWidth / w); w = maxImgWidth; }
-                        if (h > maxImgHeight) { w = w * (maxImgHeight / h); h = maxImgHeight; }
+    // Manajemen Navigasi Tema Modern
+    function pindahMenu(menuId) {
+        document.querySelectorAll('.menu-konten').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('animate-fade-in');
+        });
+        document.querySelectorAll('.nav-btn').forEach(el => {
+            el.classList.remove('bg-slate-800', 'text-white', 'border-l-4', 'border-indigo-500', 'border-pink-500', 'border-emerald-500', 'border-amber-500');
+            el.classList.add('text-slate-300');
+        });
 
-                        const x = (800 - w) / 2; // Center horizontal
-                        ctx.drawImage(img, x, currentY, w, h);
-                        currentY += h + 40; // Spasi bawah gambar
-                        resolve();
-                    };
-                });
-            }
-
-            // Setelah gambar (jika ada), gambar teks di bawahnya
-            if (textContent.trim() !== '') {
-                // Tulis teks yang dibungkus otomatis
-                wrapText(textContent, marginX, currentY + 30, 800 - (marginX*2), 50);
-            }
-
-            // Update preview di UI
-            document.getElementById('manual-preview-img').src = canvas.toDataURL('image/png');
+        const target = document.getElementById(menuId);
+        if(target) {
+            target.classList.remove('hidden');
+            target.style.animation = "fadeIn 0.3s ease-in-out forwards";
         }
 
-        // --- CONTROLLER UTAMA PENCETAKAN ---
-        async function startDirectPrint(mode) {
-            if (!btCharacteristic) {
-                alert("Sambungkan ke Printer Bluetooth terlebih dahulu!");
-                return;
+        let btnAktif = document.getElementById('nav-' + menuId);
+        if(btnAktif) {
+            btnAktif.classList.remove('text-slate-300');
+            btnAktif.classList.add('bg-slate-800', 'text-white');
+            
+            // Ganti warna border kiri sesuai kategori
+            if(menuId.includes('gambar')) btnAktif.classList.add('border-l-4', 'border-indigo-500');
+            if(menuId.includes('video')) btnAktif.classList.add('border-l-4', 'border-pink-500');
+            if(menuId.includes('tool')) btnAktif.classList.add('border-l-4', 'border-emerald-500');
+            if(menuId === 'ganti-password') btnAktif.classList.add('border-l-4', 'border-amber-500');
+        }
+
+        if(menuId === 'daftar-gambar') loadData('gambar');
+        if(menuId === 'daftar-video') loadData('video');
+        if(menuId === 'daftar-tool') loadData('tool');
+    }
+
+    // Animasi CSS Inject
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`;
+    document.head.appendChild(style);
+
+    function showNotif(pesan, tipe = 'sukses') {
+        const notifEl = document.getElementById('custom-notif');
+        const pesanEl = document.getElementById('notif-pesan');
+        const iconEl = document.getElementById('notif-icon');
+
+        pesanEl.innerText = pesan;
+
+        if (tipe === 'sukses') {
+            notifEl.className = "fixed top-8 left-1/2 transform -translate-x-1/2 bg-emerald-600/90 text-white px-6 py-4 rounded-2xl shadow-lg shadow-emerald-200 z-[200] flex items-center gap-3 transition-all duration-300 opacity-100 scale-100 pointer-events-none backdrop-blur-md border border-emerald-400/50";
+            iconEl.className = "fa-solid fa-circle-check text-2xl";
+        } else {
+            notifEl.className = "fixed top-8 left-1/2 transform -translate-x-1/2 bg-rose-600/90 text-white px-6 py-4 rounded-2xl shadow-lg shadow-rose-200 z-[200] flex items-center gap-3 transition-all duration-300 opacity-100 scale-100 pointer-events-none backdrop-blur-md border border-rose-400/50";
+            iconEl.className = "fa-solid fa-circle-xmark text-2xl";
+        }
+
+        notifEl.classList.remove('hidden');
+        setTimeout(() => {
+            notifEl.classList.remove('opacity-100', 'scale-100');
+            notifEl.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => notifEl.classList.add('hidden'), 300);
+        }, 2500);
+    }
+
+    function previewImage(event, targetId) {
+        const file = event.target.files[0];
+        const preview = document.getElementById(targetId);
+        if (file) { preview.src = URL.createObjectURL(file); preview.classList.remove('hidden'); } 
+        else { preview.src = ''; preview.classList.add('hidden'); }
+    }
+
+    function bukaLightbox(url) {
+        document.getElementById('lightbox').classList.remove('hidden');
+        document.getElementById('lightbox-img').src = url;
+    }
+    
+    function tutupLightbox() {
+        document.getElementById('lightbox').classList.add('hidden');
+        document.getElementById('lightbox-img').src = '';
+    }
+
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Pengecekan URL Sebelum Fetch
+    function cekUrlGas() {
+        if (!GAS_URL || GAS_URL === "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI") {
+            showNotif("Error: URL Apps Script belum diisi di kode HTML!", "error");
+            return false;
+        }
+        return true;
+    }
+
+    // Submit Data Universal
+    async function submitData(event, tipe) {
+        event.preventDefault();
+        if(!cekUrlGas()) return;
+
+        let btnSubmit = document.getElementById('btnSubmit' + tipe.charAt(0).toUpperCase() + tipe.slice(1));
+        let originalText = btnSubmit.innerHTML;
+        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        btnSubmit.disabled = true;
+
+        let payload = { action: "simpan", tipe: tipe };
+
+        if (tipe === 'gambar' || tipe === 'video') {
+            let fileInput = document.getElementById(tipe === 'gambar' ? 'fileGambar' : 'fileVideo');
+            if (fileInput.files.length > 0) {
+                let fullBase64 = await getBase64(fileInput.files[0]);
+                payload.base64Data = fullBase64.split(',')[1]; 
+                payload.mimeType = fileInput.files[0].type;
+                payload.namaFile = fileInput.files[0].name;
             }
+            payload.prompt = document.getElementById(tipe === 'gambar' ? 'teksPromptGambar' : 'teksPromptVideo').value;
+        } 
+        else if (tipe === 'tool') {
+            payload.namaTool = document.getElementById('inputNamaTool').value;
+            payload.deskripsiTool = document.getElementById('inputDeskripsiTool').value;
+            payload.websiteTool = document.getElementById('inputWebsiteTool').value;
+        }
 
-            let canvasesToPrint = [];
-
-            if (mode === 'pdf') {
-                canvasesToPrint = Array.from(document.getElementById('print-section').querySelectorAll('canvas'));
-                if (canvasesToPrint.length === 0) {
-                    alert("Pilih file PDF terlebih dahulu!");
-                    return;
-                }
-            } else if (mode === 'manual') {
-                // Render satu kali lagi untuk memastikan
-                await renderManualCanvas();
-                const manualCanvas = document.getElementById('manual-canvas');
-                canvasesToPrint = [manualCanvas];
+        try {
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            let result = await response.json();
+            
+            if(result.status === "sukses"){
+                showNotif("Data berhasil disimpan!", "sukses");
+                event.target.reset(); 
+                if(tipe !== 'tool') document.getElementById('preview-' + tipe + '-img').classList.add('hidden');
+                pindahMenu('daftar-' + tipe);
+            } else {
+                showNotif("Gagal: " + result.pesan, "error");
             }
+        } catch (error) { 
+            showNotif("Terjadi kesalahan jaringan.", "error"); 
+        } finally { 
+            btnSubmit.innerHTML = originalText; 
+            btnSubmit.disabled = false; 
+        }
+    }
 
-            document.getElementById('printing-overlay').classList.remove('hidden');
-            const progressBar = document.getElementById('print-progress-bar');
-            const progressText = document.getElementById('print-progress-text');
+    // Load Data
+    async function loadData(tipe) {
+        if(!cekUrlGas()) return;
 
-            try {
-                for (let i = 0; i < canvasesToPrint.length; i++) {
-                    const tsplData = generateTSPLBitmap(canvasesToPrint[i]);
-                    await sendDataToPrinterInChunks(tsplData, (progress) => {
-                        const totalProgress = ((i + progress) / canvasesToPrint.length) * 100;
-                        progressBar.style.width = totalProgress + '%';
-                        progressText.innerText = `Mencetak Label ${i+1}/${canvasesToPrint.length} (${Math.round(totalProgress)}%)`;
-                    });
+        let listContainer = document.getElementById('list-data-' + tipe);
+        let loading = document.getElementById('loading-daftar-' + tipe);
+        
+        listContainer.innerHTML = "";
+        loading.classList.remove('hidden');
+
+        try {
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "ambil", tipe: tipe }) });
+            let result = await response.json();
+            loading.classList.add('hidden');
+
+            if(result.status === "sukses" && result.data.length > 0) {
+                result.data.forEach(item => {
+                    let card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-lg transition duration-300 overflow-hidden flex flex-col group/card";
                     
-                    // Jeda ekstra antar label
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Terjadi kesalahan saat mencetak: " + error.message);
-            } finally {
-                setTimeout(() => {
-                    document.getElementById('printing-overlay').classList.add('hidden');
-                    progressBar.style.width = '0%';
-                }, 1000);
-            }
-        }
-
-        // --- PEMBENTUKAN BITMAP TSPL (WARNA OTOMATIS) ---
-        function generateTSPLBitmap(canvas) {
-            const width = canvas.width;
-            const height = canvas.height;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const imgData = ctx.getImageData(0, 0, width, height).data;
-
-            const bytesWidth = Math.ceil(width / 8); 
-
-            let headerStr = `SIZE 100 mm,150 mm\r\nGAP 2 mm,0\r\nDIRECTION 1\r\nCLS\r\nBITMAP 0,0,${bytesWidth},${height},0,`;
-            const encoder = new TextEncoder();
-            const headerBytes = encoder.encode(headerStr);
-
-            const bitmapData = new Uint8Array(bytesWidth * height);
-            const isReverseChecked = document.getElementById('fix-bg-checkbox').checked;
-            
-            bitmapData.fill(0x00); 
-            
-            let byteIndex = 0;
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < bytesWidth * 8; x++) {
-                    if (x < width) {
-                        const i = (y * width + x) * 4;
-                        const lum = (0.299 * imgData[i]) + (0.587 * imgData[i+1]) + (0.114 * imgData[i+2]);
-                        const isTransparent = imgData[i+3] < 128;
+                    if (tipe === 'gambar' || tipe === 'video') {
+                        let errorImage = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200' fill='%23f8fafc'%3E%3Crect width='400' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2394a3b8'%3EGambar Gagal Dimuat%3C/text%3E%3C/svg%3E";
+                        let imageHTML = item.gambar ? 
+                            `<div class="w-full h-64 bg-slate-100 cursor-pointer relative group flex items-center justify-center overflow-hidden border-b border-slate-100" onclick="bukaLightbox('${item.gambar}')">
+                                <img src="${item.gambar}" class="w-full h-full object-cover relative z-10 transition duration-700 group-hover:scale-110" alt="Image" onerror="this.onerror=null; this.src='${errorImage}';">
+                                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 z-20 pointer-events-none">
+                                    <div class="bg-white/20 p-3 rounded-full backdrop-blur-sm"><i class="fa-solid fa-expand text-white text-2xl"></i></div>
+                                </div>
+                            </div>` : `<div class="w-full h-3 bg-gradient-to-r from-indigo-500 to-purple-500"></div>`;
                         
-                        if (isReverseChecked) {
-                            if (lum >= 128 || isTransparent) {
-                                bitmapData[byteIndex] |= (1 << (7 - (x % 8)));
-                            }
-                        } else {
-                            if (lum < 128 && !isTransparent) {
-                                bitmapData[byteIndex] |= (1 << (7 - (x % 8)));
-                            }
-                        }
-                    } else {
-                        // Tepi/Padding
-                        if (isReverseChecked) {
-                            bitmapData[byteIndex] |= (1 << (7 - (x % 8)));
-                        }
+                        let encodedPrompt = encodeURIComponent(item.prompt || "");
+                        card.innerHTML = `
+                            ${imageHTML}
+                            <div class="p-6 flex-grow flex flex-col bg-white">
+                                <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/60 text-sm text-slate-600 mb-5 flex-grow whitespace-pre-wrap font-mono leading-relaxed custom-scroll max-h-40 overflow-y-auto group-hover/card:border-indigo-100 transition-colors">${item.prompt}</div>
+                                <div class="flex gap-2.5 mt-auto">
+                                    <button onclick="salinTeks(this)" class="flex-[2] bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold py-2.5 rounded-xl text-sm transition flex justify-center items-center gap-2">
+                                        <i class="fa-regular fa-copy"></i> Salin
+                                    </button>
+                                    <button onclick="bukaModalEdit('${item.id}', '${tipe}', '${encodedPrompt}')" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold py-2.5 rounded-xl text-sm transition flex justify-center items-center" title="Edit">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="hapusData('${item.id}', '${tipe}')" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-2.5 rounded-xl text-sm transition flex justify-center items-center" title="Hapus">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (tipe === 'tool') {
+                        let encodedNama = encodeURIComponent(item.nama || "");
+                        let encodedDesk = encodeURIComponent(item.deskripsi || "");
+                        let encodedWeb = encodeURIComponent(item.website || "");
+                        
+                        let linkBtn = (item.website && item.website.trim() !== "") ? 
+                            `<a href="${item.website}" target="_blank" class="flex-[2] text-center bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 rounded-xl text-sm transition flex justify-center items-center gap-2">
+                                Kunjungi Web <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                            </a>` : 
+                            `<div class="flex-[2] text-center bg-slate-50 text-slate-400 font-bold py-3 rounded-xl text-sm flex items-center justify-center cursor-not-allowed">
+                                Tanpa Link
+                            </div>`;
+
+                        card.innerHTML = `
+                            <div class="p-7 flex-grow flex flex-col">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h4 class="text-xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
+                                        <div class="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-sm border border-emerald-50"><i class="fa-solid fa-rocket"></i></div>
+                                        ${item.nama}
+                                    </h4>
+                                </div>
+                                <p class="text-sm text-slate-600 mb-6 flex-grow leading-relaxed">${item.deskripsi}</p>
+                                <div class="flex gap-2.5">
+                                    ${linkBtn}
+                                    <button onclick="bukaModalEditTool('${item.id}', '${encodedNama}', '${encodedDesk}', '${encodedWeb}')" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-3 rounded-xl text-sm transition flex justify-center items-center">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="hapusData('${item.id}', '${tipe}')" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-3 rounded-xl text-sm transition flex justify-center items-center">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
                     }
-                    if (x % 8 === 7) byteIndex++;
-                }
+                    listContainer.appendChild(card);
+                });
+            } else {
+                listContainer.innerHTML = `<div class="col-span-full text-center text-slate-400 py-16"><div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100"><i class="fa-solid fa-folder-open text-4xl text-slate-300 block"></i></div><p class="font-medium">Belum ada data tersimpan.</p></div>`;
             }
-            
-            const footerBytes = encoder.encode("\r\nPRINT 1\r\n");
-
-            const finalBuffer = new Uint8Array(headerBytes.length + bitmapData.length + footerBytes.length);
-            finalBuffer.set(headerBytes, 0);
-            finalBuffer.set(bitmapData, headerBytes.length);
-            finalBuffer.set(footerBytes, headerBytes.length + bitmapData.length);
-
-            return finalBuffer;
+        } catch (error) {
+            loading.classList.add('hidden');
+            listContainer.innerHTML = `<div class="col-span-full text-center text-rose-500 py-12">Gagal mengambil data dari server.</div>`;
         }
+    }
 
-        // ==========================================
-        // LOGIKA BACA PDF & RENDER (PDF.js)
-        // ==========================================
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    // Modal Edit Prompt (Gambar/Video)
+    function bukaModalEdit(id, tipe, encodedPrompt) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-tipe').value = tipe;
+        document.getElementById('edit-teks').value = decodeURIComponent(encodedPrompt);
+        
+        const modal = document.getElementById('modal-edit');
+        const content = document.getElementById('modal-edit-content');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function tutupModalEdit() { 
+        const modal = document.getElementById('modal-edit');
+        const content = document.getElementById('modal-edit-content');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+    
+    async function simpanEdit() {
+        let payload = {
+            action: "edit", 
+            id: document.getElementById('edit-id').value, 
+            tipe: document.getElementById('edit-tipe').value, 
+            prompt: document.getElementById('edit-teks').value
+        };
+        eksekusiEdit(payload, 'btnSimpanEdit', tutupModalEdit);
+    }
 
-        const fileInput = document.getElementById('pdf-upload');
-        let totalPagesRendered = 0;
+    // Modal Edit Tool AI
+    function bukaModalEditTool(id, encodedNama, encodedDesk, encodedWeb) {
+        document.getElementById('edit-tool-id').value = id;
+        document.getElementById('edit-tool-nama').value = decodeURIComponent(encodedNama);
+        document.getElementById('edit-tool-deskripsi').value = decodeURIComponent(encodedDesk);
+        document.getElementById('edit-tool-website').value = decodeURIComponent(encodedWeb);
+        
+        const modal = document.getElementById('modal-edit-tool');
+        const content = document.getElementById('modal-edit-tool-content');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function tutupModalEditTool() { 
+        const modal = document.getElementById('modal-edit-tool');
+        const content = document.getElementById('modal-edit-tool-content');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
 
-        fileInput.addEventListener('change', handleFiles);
+    async function simpanEditTool() {
+        let payload = {
+            action: "edit", 
+            id: document.getElementById('edit-tool-id').value, 
+            tipe: 'tool', 
+            namaTool: document.getElementById('edit-tool-nama').value,
+            deskripsiTool: document.getElementById('edit-tool-deskripsi').value,
+            websiteTool: document.getElementById('edit-tool-website').value
+        };
+        eksekusiEdit(payload, 'btnSimpanEditTool', tutupModalEditTool);
+    }
 
-        async function handleFiles(event) {
-            const files = Array.from(event.target.files).filter(f => f.type === "application/pdf");
-            if(files.length === 0) return;
+    // Fungsi Eksekusi Edit Universal
+    async function eksekusiEdit(payload, btnId, tutupModalFunc) {
+        if(!cekUrlGas()) return;
+        let btn = document.getElementById(btnId);
+        let originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`; 
+        btn.disabled = true;
 
-            document.getElementById('drop-zone').classList.add('hidden');
-            document.getElementById('loading-indicator').classList.remove('hidden');
-            
-            try {
-                for(let file of files) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument(new Uint8Array(arrayBuffer)).promise;
-                    
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        await renderPageForDirectPrint(pdf, i);
-                        totalPagesRendered++;
-                    }
-                }
-                
-                document.getElementById('total-pages-display').innerText = `${totalPagesRendered} Halaman`;
-                document.getElementById('loading-indicator').classList.add('hidden');
-                document.getElementById('file-list-container').classList.remove('hidden');
-                document.getElementById('action-area').classList.remove('hidden');
-                
-            } catch(e) {
-                console.error(e);
-                alert("Gagal membaca PDF");
-                resetApp();
+        try {
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            let result = await response.json();
+            if(result.status === "sukses"){
+                tutupModalFunc();
+                showNotif("Data berhasil diedit!", "sukses");
+                loadData(payload.tipe); 
+            } else {
+                showNotif("Gagal: " + result.pesan, "error");
             }
+        } catch(err) { 
+            showNotif("Terjadi kesalahan jaringan.", "error"); 
+        } finally { 
+            btn.innerHTML = originalText; 
+            btn.disabled = false; 
+        }
+    }
+
+    // Modal Konfirmasi Hapus Data (Modern Custom UI)
+    function hapusData(id, tipe) {
+        if(!cekUrlGas()) return;
+        
+        itemAkanDihapus = { id, tipe };
+        const modal = document.getElementById('modal-hapus');
+        const modalContent = document.getElementById('modal-hapus-content');
+        
+        modal.classList.remove('hidden');
+        // Animasi pop-in
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function batalHapus() {
+        const modal = document.getElementById('modal-hapus');
+        const modalContent = document.getElementById('modal-hapus-content');
+        
+        // Animasi pop-out
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            itemAkanDihapus = { id: null, tipe: null };
+        }, 300);
+    }
+
+    async function konfirmasiHapus() {
+        const { id, tipe } = itemAkanDihapus;
+        if (!id || !tipe) return batalHapus();
+
+        let btn = document.getElementById('btnKonfirmasiHapus');
+        let originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...`;
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "hapus", id: id, tipe: tipe }) });
+            let result = await response.json();
+            if(result.status === "sukses"){ 
+                showNotif("Data berhasil dihapus!", "sukses"); 
+                loadData(tipe); 
+            } else {
+                showNotif("Gagal: " + result.pesan, "error");
+            }
+        } catch(err) { 
+            showNotif("Terjadi kesalahan jaringan.", "error"); 
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            batalHapus(); // Tutup modal setelah selesai
+        }
+    }
+
+    // Copy Text
+    function salinTeks(btn) {
+        let teks = btn.parentElement.previousElementSibling.innerText;
+        navigator.clipboard.writeText(teks).then(() => {
+            let originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check text-emerald-500"></i>`;
+            setTimeout(() => { btn.innerHTML = originalText; }, 1500);
+        });
+    }
+
+    // Fungsi Toggle Eye Password
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    // Inisialisasi awal
+    window.onload = () => {
+        // Peringatan jika URL belum diganti di script
+        if (GAS_URL === "ISI_DENGAN_URL_WEB_APP_ANDA_DISINI") {
+            setTimeout(() => {
+                showNotif("Peringatan: Anda belum memasukkan URL Apps Script di dalam kode HTML!", "error");
+            }, 1000);
+        }
+    };
+
+    // --- FUNGSI LOGIN & GANTI PASSWORD ---
+    async function handleLogin(event) {
+        event.preventDefault();
+        if(!cekUrlGas()) return;
+        
+        let btn = document.getElementById('btnLogin');
+        let pass = document.getElementById('inputPasswordLogin').value;
+        let errorMsg = document.getElementById('loginError');
+        let originalText = btn.innerHTML;
+        
+        errorMsg.classList.add('hidden');
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...`;
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "cekLogin", password: pass }) 
+            });
+            let result = await response.json();
+            
+            if(result.status === "sukses" && result.valid) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                pindahMenu('daftar-gambar');
+                showNotif("Login Berhasil!", "sukses");
+            } else {
+                errorMsg.innerText = result.pesan || "Password salah!";
+                errorMsg.classList.remove('hidden');
+                showNotif(result.pesan || "Password salah!", "error");
+            }
+        } catch (error) {
+            errorMsg.innerText = "Gagal terhubung ke server.";
+            errorMsg.classList.remove('hidden');
+            showNotif("Gagal terhubung ke server.", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function handleGantiPassword(event) {
+        event.preventDefault();
+        if(!cekUrlGas()) return;
+
+        let passLama = document.getElementById('inputPassLama').value;
+        let passBaru = document.getElementById('inputPassBaru').value;
+        let passConfirm = document.getElementById('inputPassBaruConfirm').value;
+
+        if(passBaru !== passConfirm) {
+            showNotif("Konfirmasi password baru tidak cocok!", "error");
+            return;
         }
 
-        async function renderPageForDirectPrint(pdf, pageNumber) {
-            const page = await pdf.getPage(pageNumber);
+        let btn = document.getElementById('btnSubmitGantiPassword');
+        let originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        btn.disabled = true;
+
+        try {
+            let response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "gantiPassword", passwordLama: passLama, passwordBaru: passBaru }) 
+            });
+            let result = await response.json();
             
-            const viewportTemp = page.getViewport({ scale: 1 });
-            const requiredScale = 800 / viewportTemp.width; 
-            const viewport = page.getViewport({ scale: requiredScale });
-
-            const printCanvas = document.createElement('canvas');
-            const canvasId = `print-canvas-${totalPagesRendered}`;
-            printCanvas.id = canvasId;
-            printCanvas.width = viewport.width; 
-            printCanvas.height = viewport.height;
-            const printCtx = printCanvas.getContext('2d', { willReadFrequently: true });
-            
-            printCtx.fillStyle = "white";
-            printCtx.fillRect(0, 0, printCanvas.width, printCanvas.height);
-
-            await page.render({ canvasContext: printCtx, viewport: viewport }).promise;
-            document.getElementById('print-section').appendChild(printCanvas);
-
-            const previewWrapper = document.createElement('div');
-            previewWrapper.className = "relative shrink-0 preview-item group";
-            previewWrapper.onclick = () => openModal(canvasId);
-
-            const previewCanvas = document.createElement('canvas');
-            previewCanvas.width = viewport.width;
-            previewCanvas.height = viewport.height;
-            previewCanvas.className = "w-32 h-auto object-contain border border-slate-300 bg-white rounded";
-            previewCanvas.getContext('2d').drawImage(printCanvas, 0, 0);
-            
-            const zoomIcon = document.createElement('div');
-            zoomIcon.className = "absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded transition-opacity";
-            zoomIcon.innerHTML = `<i data-lucide="zoom-in" class="text-white w-8 h-8"></i>`;
-
-            previewWrapper.appendChild(previewCanvas);
-            previewWrapper.appendChild(zoomIcon);
-            
-            document.getElementById('screen-preview').appendChild(previewWrapper);
-            lucide.createIcons({ root: previewWrapper });
+            if(result.status === "sukses") {
+                showNotif(result.pesan, "sukses");
+                event.target.reset();
+            } else {
+                showNotif(result.pesan, "error");
+            }
+        } catch (error) {
+            showNotif("Terjadi kesalahan jaringan.", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
+    }
 
-        function resetApp() {
-            fileInput.value = '';
-            document.getElementById('drop-zone').classList.remove('hidden');
-            document.getElementById('file-list-container').classList.add('hidden');
-            document.getElementById('action-area').classList.add('hidden');
-            document.getElementById('screen-preview').innerHTML = '';
-            document.getElementById('print-section').innerHTML = '';
-            totalPagesRendered = 0;
-        }
-    </script>
+</script>
+
 </body>
 </html>
